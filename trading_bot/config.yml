@@ -1,0 +1,43 @@
+exchange:
+  name: 'binance'
+  api_key: '${BINANCE_API_KEY}'
+  api_secret: '${BINANCE_API_SECRET}'
+  default_symbol: 'BTC/USDT'
+  timeframe: '5m'
+
+backtest:
+  initial_capital: 10000.0
+  start_date: '2023-01-01T00:00:00Z'
+
+live:
+  initial_capital: 1000.0
+
+strategies:
+  ema_cross_rsi_macd:
+    enabled: true
+    ema_short: 9
+    ema_long: 21
+    rsi_period: 14
+    rsi_sensitivity: 8
+    rsi_overbought: 70
+    rsi_oversold: 30
+    macd_fast: 12
+    macd_slow: 26
+    macd_signal: 9
+  ema_rebound:
+    enabled: true
+    ema_period: 200
+  bollinger_bands_breakout:
+    enabled: true
+    bb_period: 20
+    bb_std_dev: 2
+
+risk_management:
+  risk_per_trade: 0.20
+  take_profit_percentage: 0.03
+  stop_loss_percentage: 0.01
+
+persistence:
+  trades_file: 'trades.csv'
+  log_file: 'bot.log'
+  metrics_file: 'metrics.csv'
