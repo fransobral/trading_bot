@@ -26,22 +26,22 @@ class BacktestingService:
         capital = self.config['backtest']['initial_capital']
         completed_trades = []
 
-        for i in range(50, len(data)):  # Empezar desde 50 para tener suficientes datos para EMA 50
+        for i in range(200, len(data)):  # Empezar desde 200 para tener suficientes datos para EMA 200
             current_row = data.iloc[i]
             df_until_now = data.iloc[:i+1]
             
             # Verificar primero si hay posiciones abiertas que deben cerrarse
             self._check_exit_conditions(current_row, completed_trades, capital)
             
-            # Solo buscar nuevas entradas si no hay posiciones abiertas
+            # Solo buscar nuevas entradas si es menor al numero permitido
             if len(self.open_positions) < self.config['backtest']['simultaniouseous_trades']:
-                # Usar la nueva estrategia de cruce de EMA
-                buy_signal, sell_signal = self.strategy_service.ema_cross(df_until_now)
+                # Usar la nueva estrategia avanzada
+                buy_signal, sell_signal, atr = self.strategy_service.advanced_ema_strategy(df_until_now)
 
                 if buy_signal.iloc[-1]:
-                    self._open_long_position(current_row, capital)
+                    self._open_long_position(current_row, capital, atr.iloc[-1])
                 elif sell_signal.iloc[-1]:
-                    self._open_short_position(current_row, capital)
+                    self._open_short_position(current_row, capital, atr.iloc[-1])
 
         # Cerrar cualquier posición que quede abierta al final del backtest
         self._close_remaining_positions(data.iloc[-1], completed_trades, capital)
@@ -49,12 +49,12 @@ class BacktestingService:
         self.persistence_adapter.save_trades(completed_trades)
         self.calculate_metrics(completed_trades, capital)
 
-    def _open_long_position(self, current_row, capital):
-        """Abre una posición larga (compra)"""
+    def _open_long_position(self, current_row, capital, atr_value=None):
+        """Abre una posición larga con TP/SL dinámicos"""
         position_size = self.risk_management_service.calculate_position_size(capital)
         entry_price = current_row['close']
-        take_profit = self.risk_management_service.get_take_profit(entry_price)
-        stop_loss = self.risk_management_service.get_stop_loss(entry_price)
+        take_profit = self.risk_management_service.get_take_profit(entry_price, atr_value)
+        stop_loss = self.risk_management_service.get_stop_loss(entry_price, atr_value)
         
         position = {
             'id': len(self.open_positions) + 1,
@@ -65,19 +65,21 @@ class BacktestingService:
             'position_size': position_size,
             'take_profit': take_profit,
             'stop_loss': stop_loss,
-            'symbol': self.config['exchange']['default_symbol']
+            'symbol': self.config['exchange']['default_symbol'],
+            'atr_value': atr_value
         }
         
         self.open_positions.append(position)
-        print(f"Opened LONG position at {entry_price}, TP: {take_profit:.4f}, SL: {stop_loss:.4f}")
+        tp_distance = ((take_profit - entry_price) / entry_price) * 100
+        sl_distance = ((entry_price - stop_loss) / entry_price) * 100
+        print(f"Opened LONG position at {entry_price:.2f}, TP: {take_profit:.2f} (+{tp_distance:.1f}%), SL: {stop_loss:.2f} (-{sl_distance:.1f}%), ATR: {atr_value:.2f}")
 
-    def _open_short_position(self, current_row, capital):
-        """Abre una posición corta (venta)"""
+    def _open_short_position(self, current_row, capital, atr_value=None):
+        """Abre una posición corta con TP/SL dinámicos"""
         position_size = self.risk_management_service.calculate_position_size(capital)
         entry_price = current_row['close']
-        # Para short, invertimos TP y SL
-        take_profit = entry_price * (1 - self.config['risk_management']['take_profit_percentage'])
-        stop_loss = entry_price * (1 + self.config['risk_management']['stop_loss_percentage'])
+        take_profit = self.risk_management_service.get_take_profit_short(entry_price, atr_value)
+        stop_loss = self.risk_management_service.get_stop_loss_short(entry_price, atr_value)
         
         position = {
             'id': len(self.open_positions) + 1,
@@ -88,11 +90,14 @@ class BacktestingService:
             'position_size': position_size,
             'take_profit': take_profit,
             'stop_loss': stop_loss,
-            'symbol': self.config['exchange']['default_symbol']
+            'symbol': self.config['exchange']['default_symbol'],
+            'atr_value': atr_value
         }
         
         self.open_positions.append(position)
-        print(f"Opened SHORT position at {entry_price}, TP: {take_profit:.4f}, SL: {stop_loss:.4f}")
+        tp_distance = ((entry_price - take_profit) / entry_price) * 100
+        sl_distance = ((stop_loss - entry_price) / entry_price) * 100
+        print(f"Opened SHORT position at {entry_price:.2f}, TP: {take_profit:.2f} (-{tp_distance:.1f}%), SL: {stop_loss:.2f} (+{sl_distance:.1f}%), ATR: {atr_value:.2f}")
 
     def _check_exit_conditions(self, current_row, completed_trades, capital):
         """Verifica si alguna posición abierta debe cerrarse"""
