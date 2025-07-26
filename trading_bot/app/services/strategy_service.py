@@ -1,5 +1,6 @@
 import pandas as pd
-import talib
+import ta
+import pandas_ta as pta
 
 class StrategyService:
     def __init__(self, config):
@@ -7,32 +8,35 @@ class StrategyService:
 
     def ema_cross_rsi_macd(self, data: pd.DataFrame):
         # EMA Cross
-        ema_short = talib.EMA(data['close'], timeperiod=self.config['strategies']['ema_cross_rsi_macd']['ema_short'])
-        ema_long = talib.EMA(data['close'], timeperiod=self.config['strategies']['ema_cross_rsi_macd']['ema_long'])
+        ema_short = ta.trend.ema_indicator(data['close'], window=self.config['strategies']['ema_cross_rsi_macd']['ema_short'])
+        ema_long = ta.trend.ema_indicator(data['close'], window=self.config['strategies']['ema_cross_rsi_macd']['ema_long'])
 
         # RSI
-        rsi = talib.RSI(data['close'], timeperiod=self.config['strategies']['ema_cross_rsi_macd']['rsi_period'])
+        rsi = ta.momentum.rsi(data['close'], window=self.config['strategies']['ema_cross_rsi_macd']['rsi_period'])
 
-        # MACD
-        macd, macdsignal, _ = talib.MACD(data['close'],
-                                         fastperiod=self.config['strategies']['ema_cross_rsi_macd']['macd_fast'],
-                                         slowperiod=self.config['strategies']['ema_cross_rsi_macd']['macd_slow'],
-                                         signalperiod=self.config['strategies']['ema_cross_rsi_macd']['macd_signal'])
+        # MACD usando ta
+        macd_line = ta.trend.macd(data['close'], 
+                                 window_fast=self.config['strategies']['ema_cross_rsi_macd']['macd_fast'],
+                                 window_slow=self.config['strategies']['ema_cross_rsi_macd']['macd_slow'])
+        macd_signal = ta.trend.macd_signal(data['close'], 
+                                          window_fast=self.config['strategies']['ema_cross_rsi_macd']['macd_fast'],
+                                          window_slow=self.config['strategies']['ema_cross_rsi_macd']['macd_slow'],
+                                          window_sign=self.config['strategies']['ema_cross_rsi_macd']['macd_signal'])
 
         # Buy signal
         buy_signal = ((ema_short > ema_long) & (ema_short.shift(1) <= ema_long.shift(1)) &
                       (rsi < self.config['strategies']['ema_cross_rsi_macd']['rsi_overbought'] - self.config['strategies']['ema_cross_rsi_macd']['rsi_sensitivity']) &
-                      (macd > macdsignal))
+                      (macd_line > macd_signal))
 
         # Sell signal
         sell_signal = ((ema_short < ema_long) & (ema_short.shift(1) >= ema_long.shift(1)) &
                        (rsi > self.config['strategies']['ema_cross_rsi_macd']['rsi_oversold'] + self.config['strategies']['ema_cross_rsi_macd']['rsi_sensitivity']) &
-                       (macd < macdsignal))
+                       (macd_line < macd_signal))
 
         return buy_signal, sell_signal
 
     def ema_rebound(self, data: pd.DataFrame):
-        ema = talib.EMA(data['close'], timeperiod=self.config['strategies']['ema_rebound']['ema_period'])
+        ema = ta.trend.ema_indicator(data['close'], window=self.config['strategies']['ema_rebound']['ema_period'])
 
         # Buy signal
         buy_signal = (data['low'] <= ema) & (data['close'] > ema)
@@ -43,10 +47,11 @@ class StrategyService:
         return buy_signal, sell_signal
 
     def bollinger_bands_breakout(self, data: pd.DataFrame):
-        upper, middle, lower = talib.BBANDS(data['close'],
-                                            timeperiod=self.config['strategies']['bollinger_bands_breakout']['bb_period'],
-                                            nbdevup=self.config['strategies']['bollinger_bands_breakout']['bb_std_dev'],
-                                            nbdevdn=self.config['strategies']['bollinger_bands_breakout']['bb_std_dev'])
+        # Bollinger Bands usando ta
+        bollinger = ta.volatility.BollingerBands(data['close'], window=20, window_dev=2)
+        upper = bollinger.bollinger_hband()
+        middle = bollinger.bollinger_mavg()
+        lower = bollinger.bollinger_lband()
 
         # Buy signal
         buy_signal = (data['close'] > upper) & (data['volume'] > data['volume'].shift(1))

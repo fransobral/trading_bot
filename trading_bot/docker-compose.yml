@@ -3,9 +3,10 @@ version: '3.8'
 services:
   trading-bot:
     build: .
-    container_name: trading-bot
-    env_file:
-      - .env
+    container_name: trading_bot
     volumes:
       - .:/app
-    command: python -u main.py --mode live
+    environment:
+      - BINANCE_API_KEY=${BINANCE_API_KEY}
+      - BINANCE_API_SECRET=${BINANCE_API_SECRET}
+    command: ["python", "main.py", "--mode", "backtest"]

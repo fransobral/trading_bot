@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from trading_bot.domain.entities.order import OrderSide
+from domain.entities.order import OrderSide
 
 @dataclass
 class Trade:

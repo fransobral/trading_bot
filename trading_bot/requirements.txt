@@ -2,4 +2,5 @@ ccxt
 pandas
 pyyaml
 python-dotenv
-TA-Lib
+ta
+pandas-ta

@@ -2,11 +2,15 @@ import argparse
 import yaml
 from dotenv import load_dotenv
 import os
+import sys
 
-from trading_bot.app.services.backtesting_service import BacktestingService
-from trading_bot.infrastructure.driven_adapters.exchange_adapter import ExchangeAdapter
-from trading_bot.infrastructure.driven_adapters.persistence_adapter import PersistenceAdapter
-from trading_bot.infrastructure.driven_adapters.logging_adapter import LoggingAdapter
+# Agregar el directorio actual al path de Python
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from app.services.backtesting_service import BacktestingService
+from infrastructure.driven_adapters.exchange_adapter import ExchangeAdapter
+from infrastructure.driven_adapters.persistence_adapter import PersistenceAdapter
+from infrastructure.driven_adapters.logging_adapter import LoggingAdapter
 
 def main():
     load_dotenv()

@@ -2,27 +2,16 @@ FROM python:3.8-slim
 
 WORKDIR /app
 
-# Install TA-Lib dependencies
+# Instalar dependencias del sistema mínimas
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    build-essential \
-    wget \
-    unzip && \
+    build-essential && \
     rm -rf /var/lib/apt/lists/*
-
-# Download and install TA-Lib
-RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
-    tar -xzf ta-lib-0.4.0-src.tar.gz && \
-    cd ta-lib && \
-    ./configure --prefix=/usr && \
-    make && \
-    make install && \
-    cd .. && \
-    rm -rf ta-lib ta-lib-0.4.0-src.tar.gz
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "-u", "main.py", "--mode", "live"]
+# Cambiar el CMD para incluir el argumento requerido
+CMD ["python", "main.py", "--mode", "backtest"]

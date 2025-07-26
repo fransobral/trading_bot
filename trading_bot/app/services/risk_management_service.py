@@ -1,3 +1,7 @@
+import pandas as pd
+from domain.entities.order import Order  # En lugar de trading_bot.domain.entities.order
+from domain.entities.trade import Trade  # En lugar de trading_bot.domain.entities.trade
+
 class RiskManagementService:
     def __init__(self, config):
         self.config = config
