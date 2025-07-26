@@ -20,20 +20,23 @@ class BacktestingService:
             timeframe=self.config['exchange']['timeframe'],
             since=pd.to_datetime(self.config['backtest']['start_date'])
         )
+        
+        print(f"Loaded {len(data)} candles from {data.index[0]} to {data.index[-1]}")
 
         capital = self.config['backtest']['initial_capital']
         completed_trades = []
 
-        for i in range(1, len(data)):
+        for i in range(50, len(data)):  # Empezar desde 50 para tener suficientes datos para EMA 50
             current_row = data.iloc[i]
             df_until_now = data.iloc[:i+1]
             
             # Verificar primero si hay posiciones abiertas que deben cerrarse
             self._check_exit_conditions(current_row, completed_trades, capital)
             
-            # Solo buscar nuevas entradas si no hay posiciones abiertas (o si permites múltiples posiciones)
-            if len(self.open_positions) == 0:  # Solo una posición a la vez MODIFICARR
-                buy_signal, sell_signal = self.strategy_service.ema_cross_rsi_macd(df_until_now)
+            # Solo buscar nuevas entradas si no hay posiciones abiertas
+            if len(self.open_positions) < self.config['backtest']['simultaniouseous_trades']:
+                # Usar la nueva estrategia de cruce de EMA
+                buy_signal, sell_signal = self.strategy_service.ema_cross(df_until_now)
 
                 if buy_signal.iloc[-1]:
                     self._open_long_position(current_row, capital)

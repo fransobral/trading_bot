@@ -6,7 +6,25 @@ class StrategyService:
     def __init__(self, config):
         self.config = config
 
+    def ema_cross(self, data: pd.DataFrame):
+        """
+        Estrategia simple de cruce de EMA 20 y 50
+        - Señal de compra: EMA 20 cruza por encima de EMA 50
+        - Señal de venta: EMA 20 cruza por debajo de EMA 50
+        """
+        ema_short = ta.trend.ema_indicator(data['close'], window=self.config['strategies']['ema_cross']['ema_short'])
+        ema_long = ta.trend.ema_indicator(data['close'], window=self.config['strategies']['ema_cross']['ema_long'])
+
+        # Señal de compra: EMA corta cruza por encima de EMA larga
+        buy_signal = (ema_short > ema_long) & (ema_short.shift(1) <= ema_long.shift(1))
+
+        # Señal de venta: EMA corta cruza por debajo de EMA larga
+        sell_signal = (ema_short < ema_long) & (ema_short.shift(1) >= ema_long.shift(1))
+
+        return buy_signal, sell_signal
+
     def ema_cross_rsi_macd(self, data: pd.DataFrame):
+        """Estrategia original (ahora desactivada)"""
         # EMA Cross
         ema_short = ta.trend.ema_indicator(data['close'], window=self.config['strategies']['ema_cross_rsi_macd']['ema_short'])
         ema_long = ta.trend.ema_indicator(data['close'], window=self.config['strategies']['ema_cross_rsi_macd']['ema_long'])
@@ -36,6 +54,7 @@ class StrategyService:
         return buy_signal, sell_signal
 
     def ema_rebound(self, data: pd.DataFrame):
+        """Estrategia de rebote en EMA (desactivada)"""
         ema = ta.trend.ema_indicator(data['close'], window=self.config['strategies']['ema_rebound']['ema_period'])
 
         # Buy signal
@@ -47,6 +66,7 @@ class StrategyService:
         return buy_signal, sell_signal
 
     def bollinger_bands_breakout(self, data: pd.DataFrame):
+        """Estrategia de ruptura de Bandas de Bollinger (desactivada)"""
         # Bollinger Bands usando ta
         bollinger = ta.volatility.BollingerBands(data['close'], window=20, window_dev=2)
         upper = bollinger.bollinger_hband()

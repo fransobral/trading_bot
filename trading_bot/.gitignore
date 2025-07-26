@@ -84,3 +84,7 @@ venv.bak/
 # TA-Lib
 ta-lib/
 ta-lib-0.4.0-src.tar.gz
+
+#logging
+metrics.csv
+trades.csv

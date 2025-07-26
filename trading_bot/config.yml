@@ -3,19 +3,23 @@ exchange:
   api_key: '${BINANCE_API_KEY}'
   api_secret: '${BINANCE_API_SECRET}'
   default_symbol: 'BTC/USDT'
-  timeframe: '5m'
+  timeframe: '1h'
 
 backtest:
   initial_capital: 10000.0
   start_date: '2023-01-01T00:00:00Z'
-  end_date: '2023-12-31T23:59:59Z'
+  simultaniouseous_trades: 4
 
 live:
   initial_capital: 1000.0
 
 strategies:
-  ema_cross_rsi_macd:
+  ema_cross:
     enabled: true
+    ema_short: 20
+    ema_long: 50
+  ema_cross_rsi_macd:
+    enabled: false  # Desactivar la estrategia anterior
     ema_short: 9
     ema_long: 21
     rsi_period: 14
@@ -26,17 +30,17 @@ strategies:
     macd_slow: 26
     macd_signal: 9
   ema_rebound:
-    enabled: true
+    enabled: false  # Desactivar
     ema_period: 200
   bollinger_bands_breakout:
-    enabled: true
+    enabled: false  # Desactivar
     bb_period: 20
     bb_std_dev: 2
 
 risk_management:
   risk_per_trade: 0.20
-  take_profit_percentage: 0.03
-  stop_loss_percentage: 0.01
+  take_profit_percentage: 0.10
+  stop_loss_percentage: 0.05
 
 persistence:
   trades_file: 'trades.csv'
